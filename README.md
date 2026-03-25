@@ -12,11 +12,11 @@ Mobile game where you get to identify plants throught daily challenges!
 # MVP delivery schedule
 ---
 The backlog is tracked in the Issues-section of this repository. The backlog for the MVP is as follows:
--Creating the home screen
--Creating the main menu
--Functionality to open the camera
--Creating a module for Plantnet-API usage
--Creating a module for daily challenge generation
--Functionality to make API-requests between the game and Plantnet-API
+- Creating the home screen
+- Creating the main menu
+- Functionality to open the camera
+- Creating a module for Plantnet-API usage
+- Creating a module for daily challenge generation
+- Functionality to make API-requests between the game and Plantnet-API
 
 Each task should take roughly 2 days.
