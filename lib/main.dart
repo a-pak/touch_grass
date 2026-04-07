@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:touch_grass/screens/home_screen.dart';
+import 'package:touch_grass/theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]); // App can only run in portrait mode
   runApp(const MyApp());
 }
 
@@ -12,17 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Touch Grass',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 65, 200, 65)),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color.fromARGB(255, 65, 200, 65),
-          centerTitle: true,
-        ),
-        navigationBarTheme: const NavigationBarThemeData(
-          backgroundColor: Color.fromARGB(255, 65, 200, 65),
-          indicatorColor: Colors.white70,
-        ),
-      ),
+      theme: AppTheme.theme,
       home: const HomeScreen(title: 'Touch Grass'),
     );
   }

@@ -5,66 +5,80 @@ class ChallengeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
-
-    const challengeBlock = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'Todays daily challenge is:',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 12),
-        Text(
-          'Daily challenge placeholder',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ],
-    );
-
-    const playerBlock = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'Player: User',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'Current streak: 0 days',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16),
-        ),
-      ],
-    );
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: isLandscape
-            ? Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
-                  Flexible(child: challengeBlock),
-                  SizedBox(width: 144),
-                  Flexible(child: playerBlock),
-                ],
-              )
-            : const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  challengeBlock,
-                  SizedBox(height: 168),
-                  playerBlock,
-                ],
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(48),
+            child: Text(
+              'Daily Challenge',
+              style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(height: 20),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 450),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(48, 0, 48, 24),
+                  children: const [
+                    _ChallengeCard(
+                      title: 'Random challenge 1',
+                      imageUrl: 'https://picsum.photos/id/18/250',
+                    ),
+                    SizedBox(height: 16),
+                    _ChallengeCard(
+                      title: 'Random challenge 2',
+                      imageUrl: 'https://picsum.photos/id/28/250',
+                    ),
+                    SizedBox(height: 16),
+                    _ChallengeCard(
+                      title: 'Random challenge 3',
+                      imageUrl: 'https://picsum.photos/id/306/250',
+                    ),
+                  ],
+                ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChallengeCard extends StatelessWidget {
+  const _ChallengeCard({required this.title, required this.imageUrl});
+
+  final String title;
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 5 / 4,
+            child: Image.network(
+              imageUrl,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
