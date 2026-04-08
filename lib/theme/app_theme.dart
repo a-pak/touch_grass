@@ -9,7 +9,7 @@ class AppTheme {
     // ),
     navigationBarTheme: const NavigationBarThemeData(
       backgroundColor: Color.fromARGB(255, 41, 58, 51),
-      indicatorColor: Colors.lightBlue,
+      indicatorColor: Color.fromARGB(255, 101, 104, 105),
     ),
     cardTheme: const CardThemeData(
       color: Color.fromARGB(255, 41, 58, 51),

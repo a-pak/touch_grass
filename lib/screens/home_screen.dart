@@ -1,5 +1,3 @@
-// TODO: siirrä värit ja tyylit teematiedostoon
-
 import 'package:flutter/material.dart';
 import 'package:touch_grass/screens/camera_screen.dart';
 import 'package:touch_grass/screens/challenge_screen.dart';
@@ -35,7 +33,10 @@ class _HomeScreenState extends State<HomeScreen> {
       // appBar: AppBar(
       //   title: Text(widget.title),
       // ),
-      body: _tabs[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _tabs,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
