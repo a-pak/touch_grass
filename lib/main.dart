@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:touch_grass/screens/home_screen.dart';
+import 'package:touch_grass/screens/welcome_screen.dart';
 import 'package:touch_grass/theme/app_theme.dart';
 
 void main() async {
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Touch Grass',
       theme: AppTheme.theme,
-      home: const HomeScreen(title: 'Touch Grass'),
+      home: const WelcomeScreen(),
     );
   }
 }
