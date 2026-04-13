@@ -1,3 +1,7 @@
+// TODO: Kun kuva on otettu, niin pitäisi olla kaksi nappia
+// Ylempänä "send to API" ja alempana "take another photo".
+// refaktoroi rivit 219-239 renderöimään _capturedImageBytes tilan perusteella
+
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
