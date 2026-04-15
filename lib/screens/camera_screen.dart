@@ -1,6 +1,4 @@
-// TODO: Kun kuva on otettu, niin pitäisi olla kaksi nappia
-// Ylempänä "send to API" ja alempana "take another photo".
-// refaktoroi rivit 219-239 renderöimään _capturedImageBytes tilan perusteella
+// TODO: refaktoroi vastauksen tarkistus _sendPhoto:ssa
 
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
@@ -51,7 +49,8 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     try {
-      final CameraController controller = await _cameraService.initializeCamera();
+      final CameraController controller = await _cameraService
+          .initializeCamera();
 
       if (!mounted) {
         await _cameraService.disposeController(controller);
@@ -105,7 +104,6 @@ class _CameraScreenState extends State<CameraScreen> {
         _capturedFile = imageFile;
         _isTakingPicture = false;
       });
-
     } on CameraException catch (error) {
       if (!mounted) {
         return;
@@ -152,12 +150,21 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Success: $result'),
-          backgroundColor: Colors.green.shade800,
-        ),
-      );
+      if (result['error'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No plant recognized. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Success! Best match: ${result['bestMatch']}'),
+            backgroundColor: Colors.green.shade800,
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -228,8 +235,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-
-@override
+  @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
@@ -242,10 +248,10 @@ class _CameraScreenState extends State<CameraScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            
+
             Expanded(child: _buildCameraArea()),
             const SizedBox(height: 12),
-            
+
             if (_errorMessage != null) ...[
               Text(
                 _errorMessage!,
@@ -274,9 +280,13 @@ class _CameraScreenState extends State<CameraScreen> {
             if (_capturedImageBytes != null) ...[
               ElevatedButton.icon(
                 onPressed: _isAnalyzing ? null : _sendPhoto,
-                icon: _isAnalyzing 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.cloud_upload),
+                icon: _isAnalyzing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_upload),
                 label: Text(_isAnalyzing ? 'Analyzing...' : 'Send to Backend'),
               ),
               const SizedBox(height: 10),
