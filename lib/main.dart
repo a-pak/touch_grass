@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:touch_grass/screens/welcome_screen.dart';
+import 'package:touch_grass/services/challenge_service.dart';
 import 'package:touch_grass/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]); // App can only run in portrait mode
+  await DailyChallengeService().ensureDailyChallengesOnStartup();
   runApp(const MyApp());
 }
 

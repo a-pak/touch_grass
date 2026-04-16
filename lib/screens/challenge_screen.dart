@@ -1,5 +1,8 @@
-// TODO: korttia painamalla voisi aueta jokin vihje sijainnista, esim. pop-up ikkunaan tai verkkoselaimeen
 // TODO: ListView:n tilalle saattaa löytyä jokin muu kontti jolla skrollaus on sujuvampaa ks. https://stackoverflow.com/questions/53405399/simple-flutter-list-view-choppy-scrolling
+// TODO: korttia painamalla voisi aueta jokin vihje sijainnista, esim. pop-up ikkunaan tai verkkoselaimeen
+// TODO: hae haasteet sharedpreferencestä
+// TODO: näytä onko haaste suoritettu
+// TODO: näytä aika, millon haasteet uusiutuu
 
 import 'package:flutter/material.dart';
 
