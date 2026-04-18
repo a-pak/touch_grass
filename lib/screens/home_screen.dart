@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:touch_grass/screens/camera_screen.dart';
 import 'package:touch_grass/screens/challenge_screen.dart';
 import 'package:touch_grass/screens/leaderboard_screen.dart';
+import 'package:touch_grass/services/challenge_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.title});
@@ -13,12 +14,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Luodaan _challengeService täällä, jotta voidaan löytää päivän haasteet muissa näytöissä
+  // Joskus hot reload voi aiheuttaa ongelmia näiden late-muuttujien kanssa, hot restart yleensä korjaa
+  late final DailyChallengeService _challengeService;
+
+  @override
+  void initState() {
+    super.initState();
+    _challengeService = DailyChallengeService();
+  }
+
   int _selectedIndex = 0;
 
-  static const List<Widget> _tabs = [
-    ChallengeScreen(),
-    CameraScreen(),
-    LeaderboardScreen(),
+  List<Widget> get _tabs => [
+    ChallengeScreen(service: _challengeService),
+    const CameraScreen(),
+    const LeaderboardScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -33,10 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // appBar: AppBar(
       //   title: Text(widget.title),
       // ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _tabs,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,

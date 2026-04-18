@@ -21,7 +21,10 @@ class DailyChallengeService {
 
   Future<DailyChallenges> ensureDailyChallengesOnStartup() async {
     final DailyChallenges? stored = await getStoredDailyChallenges();
-    if (stored != null && stored.isStillValid) { // Kommentoi ulos stored.isStillValid, jos pitää testata haasteen hakua uudestaan
+    if (stored != null && stored.isStillValid) {
+      print(
+        'Using stored daily challenges:\n$stored',
+      ); // TODO: poista kun sovellus valmis
       return stored;
     }
 
@@ -29,6 +32,9 @@ class DailyChallengeService {
       requiredChallengeCount: _dailyChallengeCount,
     );
     await _storeDailyChallenges(generated);
+    print(
+      'Generated daily challenges:\n$generated',
+    ); // TODO: poista kun sovellus valmis
     return generated;
   }
 
@@ -81,7 +87,11 @@ class DailyChallengeService {
       final List<dynamic> data = (response['data'] as List<dynamic>?) ?? [];
       final List<Map<String, dynamic>> plantsWithImage = data
           .whereType<Map<String, dynamic>>()
-          .where((Map<String, dynamic> plant) => plant['image_url'] != null)
+          .where(
+            (plant) => ['image_url', 'common_name', 'scientific_name'].every(
+              (key) => (plant[key] as String?)?.trim().isNotEmpty == true,
+            ),
+          )
           .toList();
 
       if (plantsWithImage.isEmpty) {

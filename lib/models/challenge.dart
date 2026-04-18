@@ -13,6 +13,11 @@ class DailyChallenges {
            fetchedDate.month == now.month &&
            fetchedDate.day == now.day;
   }
+
+  @override
+  String toString() {
+    return 'DailyChallenges(fetchedDate: $fetchedDate, challenges: $challenges)';
+  }
 }
 
 class Challenge {
@@ -27,4 +32,9 @@ class Challenge {
     required this.targetImageUrl,
     required this.targetIsCompleted,
   });
+
+  @override
+  String toString() {
+    return '\nChallenge(targetCommonName: $targetCommonName, targetScientificName: $targetScientificName, targetImageUrl: $targetImageUrl, targetIsCompleted: $targetIsCompleted)';
+  }
 }
