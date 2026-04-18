@@ -1,20 +1,18 @@
 // TODO: ListView:n tilalle saattaa löytyä jokin muu kontti jolla skrollaus on sujuvampaa ks. https://stackoverflow.com/questions/53405399/simple-flutter-list-view-choppy-scrolling
-// TODO: lisää kameranappi korttiin
-// TODO: näytä onko haaste suoritettu - lisää myös kuvake!!
+// TODO: jos jaksaa niin kun sama kasvi löytyy uudestaan joku ilmoitus (imo ei kyl viiti)
 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:touch_grass/controllers/home_tab_controller.dart';
 import 'package:touch_grass/models/challenge.dart';
 import 'package:touch_grass/services/challenge_service.dart';
+import 'package:touch_grass/widgets/challenge_card.dart';
 
 class ChallengeScreen extends StatefulWidget {
   final DailyChallengeService service;
 
-  const ChallengeScreen({
-    super.key,
-    required this.service,
-  });
+  const ChallengeScreen({super.key, required this.service});
 
   @override
   State<ChallengeScreen> createState() => _ChallengeScreenState();
@@ -25,11 +23,22 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   Future<DailyChallenges>? _dailyChallengesFuture;
   Timer? _countdownTimer;
 
+  void _handleChallengesUpdated() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _dailyChallengesFuture = _loadDailyChallenges();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _timeUntilReset = _calculateTimeUntilReset();
     _dailyChallengesFuture = _loadDailyChallenges();
+    widget.service.addListener(_handleChallengesUpdated);
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) {
         return;
@@ -41,8 +50,19 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant ChallengeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.service != widget.service) {
+      oldWidget.service.removeListener(_handleChallengesUpdated);
+      widget.service.addListener(_handleChallengesUpdated);
+      _dailyChallengesFuture = _loadDailyChallenges();
+    }
+  }
+
+  @override
   void dispose() {
     _countdownTimer?.cancel();
+    widget.service.removeListener(_handleChallengesUpdated);
     super.dispose();
   }
 
@@ -53,7 +73,8 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   }
 
   Future<DailyChallenges> _loadDailyChallenges() async {
-    final DailyChallenges? stored = await widget.service.getStoredDailyChallenges();
+    final DailyChallenges? stored = await widget.service
+        .getStoredDailyChallenges();
     return stored ?? widget.service.ensureDailyChallengesOnStartup();
   }
 
@@ -162,7 +183,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 450),
                 child: FutureBuilder<DailyChallenges>(
-                  future: _dailyChallengesFuture ??= _loadDailyChallenges(), 
+                  future: _dailyChallengesFuture ??= _loadDailyChallenges(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
                       return const Center(child: CircularProgressIndicator());
@@ -187,9 +208,13 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                       padding: const EdgeInsets.fromLTRB(48, 0, 48, 24),
                       children: [
                         for (int i = 0; i < challenges.length; i++) ...[
-                          _ChallengeCard(
+                          ChallengeCard(
                             title: challenges[i].targetCommonName,
                             imageUrl: challenges[i].targetImageUrl,
+                            isCompleted: challenges[i].targetIsCompleted,
+                            onOpenCamera: () {
+                              homeTabIndexNotifier.value = 1;
+                            },
                           ),
                           if (i < challenges.length - 1)
                             const SizedBox(height: 16),
@@ -234,65 +259,6 @@ class _StatBadge extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ChallengeCard extends StatelessWidget {
-  const _ChallengeCard({required this.title, required this.imageUrl});
-
-  final String title;
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Nämä määrää kortin koon ja mittasuhteet
-        // clamp-funktio asettaa ala- ja ylärajat, jotta eri näyttökoot tulee huomioitua
-        // Arvot käytännössä trial-and-error tyylillä
-        final width = constraints.maxWidth;
-        final scale = (width / 450).clamp(0.72, 1).toDouble();
-        final horizontalPadding = (16 * scale).clamp(12, 16).toDouble();
-        final verticalPadding = (32 * scale).clamp(10, 32).toDouble();
-        final titleSize = (26 * scale).clamp(18, 26).toDouble();
-        final imageAspectRatio = 9 / 8;
-
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: imageAspectRatio,
-                child: Image.network(
-                  imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: verticalPadding,
-                ),
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: titleSize,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

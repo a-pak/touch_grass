@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:touch_grass/controllers/home_tab_controller.dart';
 import 'package:touch_grass/screens/camera_screen.dart';
 import 'package:touch_grass/screens/challenge_screen.dart';
 import 'package:touch_grass/screens/leaderboard_screen.dart';
@@ -24,39 +25,44 @@ class _HomeScreenState extends State<HomeScreen> {
     _challengeService = DailyChallengeService();
   }
 
-  int _selectedIndex = 0;
-
   List<Widget> get _tabs => [
     ChallengeScreen(service: _challengeService),
-    const CameraScreen(),
+    CameraScreen(service: _challengeService),
     const LeaderboardScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(widget.title),
-      // ),
-      body: IndexedStack(index: _selectedIndex, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.task_alt), label: 'Challenge'),
-          NavigationDestination(icon: Icon(Icons.camera_alt), label: 'Camera'),
-          NavigationDestination(
-            icon: Icon(Icons.leaderboard),
-            label: 'Leaderboard',
+    return ValueListenableBuilder<int>(
+      valueListenable: homeTabIndexNotifier,
+      builder: (context, selectedIndex, _) {
+        return Scaffold(
+          // appBar: AppBar(
+          //   title: Text(widget.title),
+          // ),
+          body: IndexedStack(index: selectedIndex, children: _tabs),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) {
+              homeTabIndexNotifier.value = index;
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.task_alt),
+                label: 'Challenge',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.camera_alt),
+                label: 'Camera',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.leaderboard),
+                label: 'Leaderboard',
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

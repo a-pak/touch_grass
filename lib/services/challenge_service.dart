@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:touch_grass/models/challenge.dart';
 import 'package:touch_grass/services/trefle_service.dart' as api;
 
-class DailyChallengeService {
+class DailyChallengeService extends ChangeNotifier {
   DailyChallengeService({api.TrefleService? challengeFetchService})
     : _challengeFetchService = challengeFetchService ?? api.TrefleService();
 
@@ -53,6 +54,37 @@ class DailyChallengeService {
     final Map<String, dynamic> jsonMap =
         jsonDecode(rawJson) as Map<String, dynamic>;
     return _dailyChallengesFromMap(jsonMap);
+  }
+
+  Future<Challenge?> completeChallengeForScientificName({
+    required String identifiedScientificNameWithoutAuthor,
+  }) async {
+    final DailyChallenges? dailyChallenges = await getStoredDailyChallenges();
+    if (dailyChallenges == null || !dailyChallenges.isStillValid) {
+      return null;
+    }
+
+    final String normalizedIdentified = identifiedScientificNameWithoutAuthor
+        .trim()
+        .toLowerCase();
+
+    for (final Challenge challenge in dailyChallenges.challenges) {
+      print(
+        "Checking if '${challenge.targetScientificName}' matches '$normalizedIdentified'",
+      ); // TODO: poista kun sovellus valmis
+      if (challenge.targetScientificName.trim().toLowerCase() ==
+          normalizedIdentified) {
+        final bool wasCompleted = challenge.targetIsCompleted;
+        challenge.setCompleted();
+        await _storeDailyChallenges(dailyChallenges);
+        if (!wasCompleted) {
+          notifyListeners();
+        }
+        return challenge;
+      }
+    }
+
+    return null;
   }
 
   Future<DailyChallenges> _createDailyChallenges({

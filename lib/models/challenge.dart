@@ -2,16 +2,13 @@ class DailyChallenges {
   final List<Challenge> challenges;
   final DateTime fetchedDate;
 
-  const DailyChallenges({
-    required this.challenges,
-    required this.fetchedDate,
-  });
+  const DailyChallenges({required this.challenges, required this.fetchedDate});
 
   bool get isStillValid {
     final now = DateTime.now();
     return fetchedDate.year == now.year &&
-           fetchedDate.month == now.month &&
-           fetchedDate.day == now.day;
+        fetchedDate.month == now.month &&
+        fetchedDate.day == now.day;
   }
 
   @override
@@ -24,14 +21,18 @@ class Challenge {
   final String targetCommonName;
   final String targetScientificName;
   final String targetImageUrl;
-  final bool targetIsCompleted;
+  bool targetIsCompleted;
 
-  const Challenge({
+  Challenge({
     required this.targetCommonName,
     required this.targetScientificName,
     required this.targetImageUrl,
     required this.targetIsCompleted,
   });
+
+  void setCompleted() {
+    targetIsCompleted = true;
+  }
 
   @override
   String toString() {

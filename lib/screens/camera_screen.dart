@@ -1,13 +1,14 @@
-// TODO: refaktoroi vastauksen tarkistus _sendPhoto:ssa
-
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:touch_grass/services/camera_service.dart';
+import 'package:touch_grass/services/challenge_service.dart';
 import 'package:touch_grass/services/plantnet_service.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key});
+  const CameraScreen({super.key, required this.service});
+
+  final DailyChallengeService service;
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -151,19 +152,38 @@ class _CameraScreenState extends State<CameraScreen> {
 
     if (result != null) {
       if (result['error'] != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No plant recognized. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showNoPlantRecognizedSnackBar();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Success! Best match: ${result['bestMatch']}'),
-            backgroundColor: Colors.green.shade800,
-          ),
-        );
+        final String? scientificNameWithoutAuthor =
+            _extractScientificNameWithoutAuthor(result);
+
+        if (scientificNameWithoutAuthor == null) {
+          _showNoPlantRecognizedSnackBar();
+          return;
+        }
+
+        final matchedChallenge = await widget.service
+            .completeChallengeForScientificName(
+              identifiedScientificNameWithoutAuthor:
+                  scientificNameWithoutAuthor,
+            );
+
+        if (!mounted) {
+          return;
+        }
+
+        if (matchedChallenge != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Success! ${matchedChallenge.targetCommonName} was found',
+              ),
+              backgroundColor: Colors.green.shade800,
+            ),
+          );
+        } else {
+          _showNoPlantRecognizedSnackBar();
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -173,6 +193,36 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       );
     }
+  }
+
+  void _showNoPlantRecognizedSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No match found. Please try again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  String? _extractScientificNameWithoutAuthor(Map<String, dynamic> result) {
+    final List<dynamic>? results = result['results'] as List<dynamic>?;
+    if (results == null || results.isEmpty) {
+      return null;
+    }
+
+    final Map<String, dynamic>? firstResult =
+        results.first as Map<String, dynamic>?;
+    final Map<String, dynamic>? species =
+        firstResult?['species'] as Map<String, dynamic>?;
+    final String? scientificNameWithoutAuthor =
+        species?['scientificNameWithoutAuthor'] as String?;
+
+    if (scientificNameWithoutAuthor == null ||
+        scientificNameWithoutAuthor.trim().isEmpty) {
+      return null;
+    }
+
+    return scientificNameWithoutAuthor;
   }
 
   Future<void> _retakePhoto() async {
