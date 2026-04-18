@@ -1,15 +1,14 @@
-// TODO: Kun kuva on otettu, niin pitäisi olla kaksi nappia
-// Ylempänä "send to API" ja alempana "take another photo".
-// refaktoroi rivit 219-239 renderöimään _capturedImageBytes tilan perusteella
-
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:touch_grass/services/camera_service.dart';
+import 'package:touch_grass/services/challenge_service.dart';
 import 'package:touch_grass/services/plantnet_service.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key});
+  const CameraScreen({super.key, required this.service});
+
+  final DailyChallengeService service;
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -51,7 +50,8 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     try {
-      final CameraController controller = await _cameraService.initializeCamera();
+      final CameraController controller = await _cameraService
+          .initializeCamera();
 
       if (!mounted) {
         await _cameraService.disposeController(controller);
@@ -105,7 +105,6 @@ class _CameraScreenState extends State<CameraScreen> {
         _capturedFile = imageFile;
         _isTakingPicture = false;
       });
-
     } on CameraException catch (error) {
       if (!mounted) {
         return;
@@ -152,12 +151,40 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Success: $result'),
-          backgroundColor: Colors.green.shade800,
-        ),
-      );
+      if (result['error'] != null) {
+        _showNoPlantRecognizedSnackBar();
+      } else {
+        final String? scientificNameWithoutAuthor =
+            _extractScientificNameWithoutAuthor(result);
+
+        if (scientificNameWithoutAuthor == null) {
+          _showNoPlantRecognizedSnackBar();
+          return;
+        }
+
+        final matchedChallenge = await widget.service
+            .completeChallengeForScientificName(
+              identifiedScientificNameWithoutAuthor:
+                  scientificNameWithoutAuthor,
+            );
+
+        if (!mounted) {
+          return;
+        }
+
+        if (matchedChallenge != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Success! ${matchedChallenge.targetCommonName} was found',
+              ),
+              backgroundColor: Colors.green.shade800,
+            ),
+          );
+        } else {
+          _showNoPlantRecognizedSnackBar();
+        }
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -166,6 +193,36 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       );
     }
+  }
+
+  void _showNoPlantRecognizedSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No match found. Please try again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  String? _extractScientificNameWithoutAuthor(Map<String, dynamic> result) {
+    final List<dynamic>? results = result['results'] as List<dynamic>?;
+    if (results == null || results.isEmpty) {
+      return null;
+    }
+
+    final Map<String, dynamic>? firstResult =
+        results.first as Map<String, dynamic>?;
+    final Map<String, dynamic>? species =
+        firstResult?['species'] as Map<String, dynamic>?;
+    final String? scientificNameWithoutAuthor =
+        species?['scientificNameWithoutAuthor'] as String?;
+
+    if (scientificNameWithoutAuthor == null ||
+        scientificNameWithoutAuthor.trim().isEmpty) {
+      return null;
+    }
+
+    return scientificNameWithoutAuthor;
   }
 
   Future<void> _retakePhoto() async {
@@ -228,8 +285,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-
-@override
+  @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
@@ -242,10 +298,10 @@ class _CameraScreenState extends State<CameraScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            
+
             Expanded(child: _buildCameraArea()),
             const SizedBox(height: 12),
-            
+
             if (_errorMessage != null) ...[
               Text(
                 _errorMessage!,
@@ -274,9 +330,13 @@ class _CameraScreenState extends State<CameraScreen> {
             if (_capturedImageBytes != null) ...[
               ElevatedButton.icon(
                 onPressed: _isAnalyzing ? null : _sendPhoto,
-                icon: _isAnalyzing 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.cloud_upload),
+                icon: _isAnalyzing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_upload),
                 label: Text(_isAnalyzing ? 'Analyzing...' : 'Send to Backend'),
               ),
               const SizedBox(height: 10),

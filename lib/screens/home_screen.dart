@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:touch_grass/controllers/home_tab_controller.dart';
 import 'package:touch_grass/screens/camera_screen.dart';
 import 'package:touch_grass/screens/challenge_screen.dart';
 import 'package:touch_grass/screens/leaderboard_screen.dart';
+import 'package:touch_grass/services/challenge_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.title});
@@ -13,42 +15,54 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  // Luodaan _challengeService täällä, jotta voidaan löytää päivän haasteet muissa näytöissä
+  // Joskus hot reload voi aiheuttaa ongelmia näiden late-muuttujien kanssa, hot restart yleensä korjaa
+  late final DailyChallengeService _challengeService;
 
-  static const List<Widget> _tabs = [
-    ChallengeScreen(),
-    CameraScreen(),
-    LeaderboardScreen(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _challengeService = DailyChallengeService();
   }
+
+  List<Widget> get _tabs => [
+    ChallengeScreen(service: _challengeService),
+    CameraScreen(service: _challengeService),
+    const LeaderboardScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(widget.title),
-      // ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _tabs,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.task_alt), label: 'Challenge'),
-          NavigationDestination(icon: Icon(Icons.camera_alt), label: 'Camera'),
-          NavigationDestination(
-            icon: Icon(Icons.leaderboard),
-            label: 'Leaderboard',
+    return ValueListenableBuilder<int>(
+      valueListenable: homeTabIndexNotifier,
+      builder: (context, selectedIndex, _) {
+        return Scaffold(
+          // appBar: AppBar(
+          //   title: Text(widget.title),
+          // ),
+          body: IndexedStack(index: selectedIndex, children: _tabs),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (index) {
+              homeTabIndexNotifier.value = index;
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.task_alt),
+                label: 'Challenge',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.camera_alt),
+                label: 'Camera',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.leaderboard),
+                label: 'Leaderboard',
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

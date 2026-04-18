@@ -1,10 +1,115 @@
-// TODO: korttia painamalla voisi aueta jokin vihje sijainnista, esim. pop-up ikkunaan tai verkkoselaimeen
 // TODO: ListView:n tilalle saattaa löytyä jokin muu kontti jolla skrollaus on sujuvampaa ks. https://stackoverflow.com/questions/53405399/simple-flutter-list-view-choppy-scrolling
+// TODO: jos jaksaa niin kun sama kasvi löytyy uudestaan joku ilmoitus (imo ei kyl viiti)
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:touch_grass/controllers/home_tab_controller.dart';
+import 'package:touch_grass/models/challenge.dart';
+import 'package:touch_grass/services/challenge_service.dart';
+import 'package:touch_grass/widgets/challenge_card.dart';
 
-class ChallengeScreen extends StatelessWidget {
-  const ChallengeScreen({super.key});
+class ChallengeScreen extends StatefulWidget {
+  final DailyChallengeService service;
+
+  const ChallengeScreen({super.key, required this.service});
+
+  @override
+  State<ChallengeScreen> createState() => _ChallengeScreenState();
+}
+
+class _ChallengeScreenState extends State<ChallengeScreen> {
+  late Duration _timeUntilReset;
+  Future<DailyChallenges>? _dailyChallengesFuture;
+  Timer? _countdownTimer;
+
+  void _handleChallengesUpdated() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _dailyChallengesFuture = _loadDailyChallenges();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _timeUntilReset = _calculateTimeUntilReset();
+    _dailyChallengesFuture = _loadDailyChallenges();
+    widget.service.addListener(_handleChallengesUpdated);
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _timeUntilReset = _calculateTimeUntilReset();
+      });
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant ChallengeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.service != widget.service) {
+      oldWidget.service.removeListener(_handleChallengesUpdated);
+      widget.service.addListener(_handleChallengesUpdated);
+      _dailyChallengesFuture = _loadDailyChallenges();
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    widget.service.removeListener(_handleChallengesUpdated);
+    super.dispose();
+  }
+
+  Duration _calculateTimeUntilReset() {
+    final DateTime now = DateTime.now();
+    final DateTime nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    return nextMidnight.difference(now);
+  }
+
+  Future<DailyChallenges> _loadDailyChallenges() async {
+    final DailyChallenges? stored = await widget.service
+        .getStoredDailyChallenges();
+    return stored ?? widget.service.ensureDailyChallengesOnStartup();
+  }
+
+  String _formatDuration(Duration duration) {
+    final int hours = duration.inHours;
+    final int minutes = duration.inMinutes.remainder(60);
+    final int seconds = duration.inSeconds.remainder(60);
+
+    String twoDigits(int value) => value.toString().padLeft(2, '0');
+
+    return '${twoDigits(hours)}:${twoDigits(minutes)}:${twoDigits(seconds)}';
+  }
+
+  Future<void> _showHelpDialog() {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('How do daily challenges work?'),
+          content: const Text(
+            'Your task is to find the plants listed in daily challenges. '
+            'Each day at midnight, you will get 3 new plants to find. '
+            'Every day you successfully recognize at least one plant, your daily streak will increase. '
+            'The leaderboard tracks the number of separate recognitions that players have.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,43 +120,108 @@ class ChallengeScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _StatBadge(asset: 'assets/fire.png', label: '1', color: const Color(0xFFFF521A)),
+                IconButton(
+                  onPressed: _showHelpDialog,
+                  icon: const Icon(Icons.help_outline, size: 28),
+                  tooltip: 'Help',
+                ),
+                const Spacer(),
+                _StatBadge(
+                  asset: 'assets/fire.png',
+                  label: '1',
+                  color: const Color(0xFFFF521A),
+                ),
                 const SizedBox(width: 16),
-                _StatBadge(asset: 'assets/rank.png', label: '# 1', color: const Color(0xFF85C6FF)),
+                _StatBadge(
+                  asset: 'assets/rank.png',
+                  label: '# 1',
+                  color: const Color(0xFF85C6FF),
+                ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-            child: Text(
-              'Daily\nChallenge',
-              style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Daily\nChallenge',
+                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Daily challenges\nreset in',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _formatDuration(_timeUntilReset),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           Expanded(
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 450),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(48, 0, 48, 24),
-                  children: const [
-                    _ChallengeCard(
-                      title: 'Random challenge 1',
-                      imageUrl: 'https://picsum.photos/id/152/800',
-                    ),
-                    SizedBox(height: 16),
-                    _ChallengeCard(
-                      title: 'Random challenge 2',
-                      imageUrl: 'https://picsum.photos/id/28/800',
-                    ),
-                    SizedBox(height: 16),
-                    _ChallengeCard(
-                      title: 'Random challenge 3',
-                      imageUrl: 'https://picsum.photos/id/306/800',
-                    ),
-                  ],
+                child: FutureBuilder<DailyChallenges>(
+                  future: _dailyChallengesFuture ??= _loadDailyChallenges(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text('Failed to load daily challenges.'),
+                      );
+                    }
+
+                    final List<Challenge> challenges =
+                        snapshot.data?.challenges ?? <Challenge>[];
+
+                    if (challenges.isEmpty) {
+                      return const Center(
+                        child: Text('No daily challenges available.'),
+                      );
+                    }
+
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(48, 0, 48, 24),
+                      children: [
+                        for (int i = 0; i < challenges.length; i++) ...[
+                          ChallengeCard(
+                            title: challenges[i].targetCommonName,
+                            imageUrl: challenges[i].targetImageUrl,
+                            isCompleted: challenges[i].targetIsCompleted,
+                            onOpenCamera: () {
+                              homeTabIndexNotifier.value = 1;
+                            },
+                          ),
+                          if (i < challenges.length - 1)
+                            const SizedBox(height: 16),
+                        ],
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -63,7 +233,11 @@ class ChallengeScreen extends StatelessWidget {
 }
 
 class _StatBadge extends StatelessWidget {
-  const _StatBadge({required this.asset, required this.label, required this.color});
+  const _StatBadge({
+    required this.asset,
+    required this.label,
+    required this.color,
+  });
 
   final String asset;
   final String label;
@@ -78,63 +252,13 @@ class _StatBadge extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _ChallengeCard extends StatelessWidget {
-  const _ChallengeCard({required this.title, required this.imageUrl});
-
-  final String title;
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Nämä määrää kortin koon ja mittasuhteet
-        // clamp-funktio asettaa ala- ja ylärajat, jotta eri näyttökoot tulee huomioitua
-        // Arvot käytännössä trial-and-error tyylillä
-        final width = constraints.maxWidth;
-        final scale = (width / 450).clamp(0.72, 1).toDouble();
-        final horizontalPadding = (16 * scale).clamp(12, 16).toDouble();
-        final verticalPadding = (32 * scale).clamp(10, 32).toDouble();
-        final titleSize = (26 * scale).clamp(18, 26).toDouble();
-        final imageAspectRatio = 9 / 8;
-
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: imageAspectRatio,
-                child: Image.network(
-                  imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: verticalPadding,
-                ),
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: titleSize, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
