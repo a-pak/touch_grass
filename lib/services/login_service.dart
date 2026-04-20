@@ -1,0 +1,123 @@
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class AuthResponse {
+  AuthResponse({
+    required this.accessToken,
+    required this.username,
+    required this.dailyStreak,
+    required this.totalRecognitions,
+  });
+
+  final String accessToken;
+  final String username;
+  final int dailyStreak;
+  final int totalRecognitions;
+
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    return AuthResponse(
+      accessToken: json['access_token'] as String,
+      username: json['username'] as String,
+      dailyStreak: (json['daily_streak'] as num?)?.toInt() ?? 0,
+      totalRecognitions: (json['total_recognitions'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class LoginService {
+  LoginService()
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: 'http://192.168.0.101:8000/',
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+
+  static const String _accessTokenKey = 'auth.access_token';
+  static const String _usernameKey = 'auth.username';
+
+  final Dio _dio;
+
+  Future<AuthResponse> register({
+    required String username,
+    required String password,
+  }) async {
+    final Response<dynamic> response = await _dio.post(
+      'register',
+      data: {'username': username, 'password': password},
+    );
+
+    final AuthResponse auth = AuthResponse.fromJson(
+      response.data as Map<String, dynamic>,
+    );
+    return auth;
+  }
+
+  Future<AuthResponse> login({
+    required String username,
+    required String password,
+  }) async {
+    final Response<dynamic> response = await _dio.post(
+      'login',
+      data: {'username': username, 'password': password},
+    );
+
+    final AuthResponse auth = AuthResponse.fromJson(
+      response.data as Map<String, dynamic>,
+    );
+    await _saveSession(token: auth.accessToken, username: auth.username);
+    return auth;
+  }
+
+  Future<bool> incrementRecognitions({int amount = 1}) async {
+    final String? token = await _getAccessToken();
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+
+    await _dio.post(
+      'recognitions/increment',
+      data: {'amount': amount},
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return true;
+  }
+
+  Future<bool> isLoggedIn() async {
+    final String? token = await _getAccessToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  Future<void> logout() async {
+    final SharedPreferencesWithCache prefs = await _prefs();
+    await prefs.remove(_accessTokenKey);
+    await prefs.remove(_usernameKey);
+  }
+
+  Future<String?> getSavedUsername() async {
+    final SharedPreferencesWithCache prefs = await _prefs();
+    return prefs.getString(_usernameKey);
+  }
+
+  Future<void> _saveSession({
+    required String token,
+    required String username,
+  }) async {
+    final SharedPreferencesWithCache prefs = await _prefs();
+    await prefs.setString(_accessTokenKey, token);
+    await prefs.setString(_usernameKey, username);
+  }
+
+  Future<String?> _getAccessToken() async {
+    final SharedPreferencesWithCache prefs = await _prefs();
+    return prefs.getString(_accessTokenKey);
+  }
+
+  Future<SharedPreferencesWithCache> _prefs() {
+    return SharedPreferencesWithCache.create(
+      cacheOptions: const SharedPreferencesWithCacheOptions(),
+    );
+  }
+}
