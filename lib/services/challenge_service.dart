@@ -42,9 +42,7 @@ class DailyChallengeService extends ChangeNotifier {
   Future<DailyChallenges?> getStoredDailyChallenges() async {
     final SharedPreferencesWithCache prefs =
         await SharedPreferencesWithCache.create(
-          cacheOptions: const SharedPreferencesWithCacheOptions(
-            allowList: {_storageKey},
-          ),
+          cacheOptions: const SharedPreferencesWithCacheOptions(),
         );
     final String? rawJson = prefs.getString(_storageKey);
     if (rawJson == null || rawJson.isEmpty) {
@@ -56,12 +54,13 @@ class DailyChallengeService extends ChangeNotifier {
     return _dailyChallengesFromMap(jsonMap);
   }
 
-  Future<Challenge?> completeChallengeForScientificName({
+  Future<({Challenge? challenge, bool wasAlreadyCompleted})>
+  completeChallengeForScientificName({
     required String identifiedScientificNameWithoutAuthor,
   }) async {
     final DailyChallenges? dailyChallenges = await getStoredDailyChallenges();
     if (dailyChallenges == null || !dailyChallenges.isStillValid) {
-      return null;
+      return (challenge: null, wasAlreadyCompleted: false);
     }
 
     final String normalizedIdentified = identifiedScientificNameWithoutAuthor
@@ -75,16 +74,16 @@ class DailyChallengeService extends ChangeNotifier {
       if (challenge.targetScientificName.trim().toLowerCase() ==
           normalizedIdentified) {
         final bool wasCompleted = challenge.targetIsCompleted;
-        challenge.setCompleted();
-        await _storeDailyChallenges(dailyChallenges);
         if (!wasCompleted) {
+          challenge.setCompleted();
+          await _storeDailyChallenges(dailyChallenges);
           notifyListeners();
         }
-        return challenge;
+        return (challenge: challenge, wasAlreadyCompleted: wasCompleted);
       }
     }
 
-    return null;
+    return (challenge: null, wasAlreadyCompleted: false);
   }
 
   Future<DailyChallenges> _createDailyChallenges({
@@ -161,9 +160,7 @@ class DailyChallengeService extends ChangeNotifier {
   Future<void> _storeDailyChallenges(DailyChallenges dailyChallenges) async {
     final SharedPreferencesWithCache prefs =
         await SharedPreferencesWithCache.create(
-          cacheOptions: const SharedPreferencesWithCacheOptions(
-            allowList: {_storageKey},
-          ),
+          cacheOptions: const SharedPreferencesWithCacheOptions(),
         );
     await prefs.setString(
       _storageKey,

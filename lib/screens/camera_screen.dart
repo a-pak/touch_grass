@@ -3,12 +3,18 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:touch_grass/services/camera_service.dart';
 import 'package:touch_grass/services/challenge_service.dart';
+import 'package:touch_grass/services/login_service.dart';
 import 'package:touch_grass/services/plantnet_service.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key, required this.service});
+  const CameraScreen({
+    super.key,
+    required this.service,
+    required this.loginService,
+  });
 
   final DailyChallengeService service;
+  final LoginService loginService;
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -162,11 +168,20 @@ class _CameraScreenState extends State<CameraScreen> {
           return;
         }
 
-        final matchedChallenge = await widget.service
+        final completionResult = await widget.service
             .completeChallengeForScientificName(
               identifiedScientificNameWithoutAuthor:
                   scientificNameWithoutAuthor,
             );
+        final matchedChallenge = completionResult.challenge;
+
+        if (matchedChallenge != null && !completionResult.wasAlreadyCompleted) {
+          try {
+            await widget.loginService.incrementRecognitions();
+          } catch (_) {
+            // If increment fails, keep UX focused on plant detection result.
+          }
+        }
 
         if (!mounted) {
           return;
