@@ -21,12 +21,14 @@ load_dotenv()
 API_KEY = os.getenv("PLANTNET_API_KEY")
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DB_NAME = os.getenv("MONGODB_DB", "touch_grass")
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-only-change-this-secret")
+JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRES_DAYS = 7
 
 if not MONGODB_URI:
     raise RuntimeError("MONGODB_URI is required")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET is required")
 
 mongo_client = MongoClient(MONGODB_URI)
 db = mongo_client[MONGODB_DB_NAME]
