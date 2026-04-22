@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Widget> get _tabs => [
-    ChallengeScreen(service: _challengeService),
+    ChallengeScreen(service: _challengeService, loginService: _loginService),
     CameraScreen(service: _challengeService, loginService: _loginService),
     LeaderboardScreen(loginService: _loginService),
   ];

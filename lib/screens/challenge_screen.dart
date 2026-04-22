@@ -7,12 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:touch_grass/controllers/home_tab_controller.dart';
 import 'package:touch_grass/models/challenge.dart';
 import 'package:touch_grass/services/challenge_service.dart';
+import 'package:touch_grass/services/login_service.dart';
 import 'package:touch_grass/widgets/challenge_card.dart';
 
 class ChallengeScreen extends StatefulWidget {
   final DailyChallengeService service;
+  final LoginService loginService;
 
-  const ChallengeScreen({super.key, required this.service});
+  const ChallengeScreen({
+    super.key,
+    required this.service,
+    required this.loginService,
+  });
 
   @override
   State<ChallengeScreen> createState() => _ChallengeScreenState();
@@ -21,7 +27,24 @@ class ChallengeScreen extends StatefulWidget {
 class _ChallengeScreenState extends State<ChallengeScreen> {
   late Duration _timeUntilReset;
   Future<DailyChallenges>? _dailyChallengesFuture;
+  Future<UserStats>? _userStatsFuture;
   Timer? _countdownTimer;
+
+  void _refreshUserStats() {
+    setState(() {
+      _userStatsFuture = _loadUserStats();
+    });
+  }
+
+  void _handleTabChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    if (homeTabIndexNotifier.value == 0) {
+      _refreshUserStats();
+    }
+  }
 
   void _handleChallengesUpdated() {
     if (!mounted) {
@@ -30,6 +53,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
     setState(() {
       _dailyChallengesFuture = _loadDailyChallenges();
+      _userStatsFuture = _loadUserStats();
     });
   }
 
@@ -38,7 +62,9 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     super.initState();
     _timeUntilReset = _calculateTimeUntilReset();
     _dailyChallengesFuture = _loadDailyChallenges();
+    _userStatsFuture = _loadUserStats();
     widget.service.addListener(_handleChallengesUpdated);
+    homeTabIndexNotifier.addListener(_handleTabChanged);
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) {
         return;
@@ -49,6 +75,10 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     });
   }
 
+  Future<UserStats> _loadUserStats() {
+    return widget.loginService.getMyStats();
+  }
+
   @override
   void didUpdateWidget(covariant ChallengeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -56,6 +86,11 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       oldWidget.service.removeListener(_handleChallengesUpdated);
       widget.service.addListener(_handleChallengesUpdated);
       _dailyChallengesFuture = _loadDailyChallenges();
+      _userStatsFuture = _loadUserStats();
+    }
+
+    if (oldWidget.loginService != widget.loginService) {
+      _userStatsFuture = _loadUserStats();
     }
   }
 
@@ -63,6 +98,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   void dispose() {
     _countdownTimer?.cancel();
     widget.service.removeListener(_handleChallengesUpdated);
+    homeTabIndexNotifier.removeListener(_handleTabChanged);
     super.dispose();
   }
 
@@ -128,16 +164,28 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                   tooltip: 'Help',
                 ),
                 const Spacer(),
-                _StatBadge(
-                  asset: 'assets/fire.png',
-                  label: '1',
-                  color: const Color(0xFFFF521A),
-                ),
-                const SizedBox(width: 16),
-                _StatBadge(
-                  asset: 'assets/rank.png',
-                  label: '# 1',
-                  color: const Color(0xFF85C6FF),
+                FutureBuilder<UserStats>(
+                  future: _userStatsFuture ??= _loadUserStats(),
+                  builder: (context, snapshot) {
+                    final UserStats? stats = snapshot.data;
+
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _StatBadge(
+                          asset: 'assets/fire.png',
+                          label: '${stats?.dailyStreak ?? 0}',
+                          color: const Color(0xFFFF521A),
+                        ),
+                        const SizedBox(width: 16),
+                        _StatBadge(
+                          asset: 'assets/rank.png',
+                          label: '# ${stats?.leaderboardRank ?? '-'}',
+                          color: const Color(0xFF85C6FF),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -149,7 +197,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               children: [
                 const Expanded(
                   child: Text(
-                    'Daily\nChallenge',
+                    'Daily\nChallenges',
                     style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                   ),
                 ),
