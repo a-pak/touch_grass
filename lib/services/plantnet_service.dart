@@ -26,7 +26,7 @@ class PlantNetService {
 
       Response response = await _dio.post('detect', data: formData);
       // API-vastauksen printtaus
-      // TODO: poista kun sovellus on valmis
+      // TODO: remove once app is done
       (() {
         final pretty = const JsonEncoder.withIndent(
           '  ',

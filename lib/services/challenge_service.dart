@@ -10,7 +10,7 @@ class DailyChallengeService extends ChangeNotifier {
   DailyChallengeService({api.TrefleService? challengeFetchService})
     : _challengeFetchService = challengeFetchService ?? api.TrefleService();
 
-  static const String _storageKey = 'daily_challenges';
+  static const String _storageKeyPrefix = 'daily_challenges';
   static const int _dailyChallengeCount = 3;
   // Nämä sivut on toistaiseksi kovakoodattuna, mutta pitää muuttaa myöhemmin jos lisätään
   // käyttäjälle mahdollisuus valita oma maansa tai alueensa
@@ -20,31 +20,38 @@ class DailyChallengeService extends ChangeNotifier {
   final api.TrefleService _challengeFetchService;
   final Random _random = Random();
 
-  Future<DailyChallenges> ensureDailyChallengesOnStartup() async {
-    final DailyChallenges? stored = await getStoredDailyChallenges();
+  Future<DailyChallenges> loadChallenges({
+    required String username,
+  }) async {
+    final DailyChallenges? stored = await getStoredDailyChallenges(
+      username: username,
+    );
     if (stored != null && stored.isStillValid) {
       print(
         'Using stored daily challenges:\n$stored',
-      ); // TODO: poista kun sovellus valmis
+      ); // TODO: remove once app is done
       return stored;
     }
 
     final DailyChallenges generated = await _createDailyChallenges(
       requiredChallengeCount: _dailyChallengeCount,
     );
-    await _storeDailyChallenges(generated);
+    await _storeDailyChallenges(generated, username: username);
     print(
       'Generated daily challenges:\n$generated',
-    ); // TODO: poista kun sovellus valmis
+    ); // TODO: remove once app is done
     return generated;
   }
 
-  Future<DailyChallenges?> getStoredDailyChallenges() async {
+  Future<DailyChallenges?> getStoredDailyChallenges({
+    required String username,
+  }) async {
     final SharedPreferencesWithCache prefs =
         await SharedPreferencesWithCache.create(
           cacheOptions: const SharedPreferencesWithCacheOptions(),
         );
-    final String? rawJson = prefs.getString(_storageKey);
+    final String storageKey = _storageKeyForUsername(username);
+    final String? rawJson = prefs.getString(storageKey);
     if (rawJson == null || rawJson.isEmpty) {
       return null;
     }
@@ -56,9 +63,12 @@ class DailyChallengeService extends ChangeNotifier {
 
   Future<({Challenge? challenge, bool wasAlreadyCompleted})>
   completeChallengeForScientificName({
+    required String username,
     required String identifiedScientificNameWithoutAuthor,
   }) async {
-    final DailyChallenges? dailyChallenges = await getStoredDailyChallenges();
+    final DailyChallenges? dailyChallenges = await getStoredDailyChallenges(
+      username: username,
+    );
     if (dailyChallenges == null || !dailyChallenges.isStillValid) {
       return (challenge: null, wasAlreadyCompleted: false);
     }
@@ -70,13 +80,13 @@ class DailyChallengeService extends ChangeNotifier {
     for (final Challenge challenge in dailyChallenges.challenges) {
       print(
         "Checking if '${challenge.targetScientificName}' matches '$normalizedIdentified'",
-      ); // TODO: poista kun sovellus valmis
+      ); // TODO: remove once app is done
       if (challenge.targetScientificName.trim().toLowerCase() ==
           normalizedIdentified) {
         final bool wasCompleted = challenge.targetIsCompleted;
         if (!wasCompleted) {
           challenge.setCompleted();
-          await _storeDailyChallenges(dailyChallenges);
+          await _storeDailyChallenges(dailyChallenges, username: username);
           notifyListeners();
         }
         return (challenge: challenge, wasAlreadyCompleted: wasCompleted);
@@ -157,15 +167,24 @@ class DailyChallengeService extends ChangeNotifier {
     );
   }
 
-  Future<void> _storeDailyChallenges(DailyChallenges dailyChallenges) async {
+  Future<void> _storeDailyChallenges(
+    DailyChallenges dailyChallenges, {
+    required String username,
+  }) async {
     final SharedPreferencesWithCache prefs =
         await SharedPreferencesWithCache.create(
           cacheOptions: const SharedPreferencesWithCacheOptions(),
         );
+    final String storageKey = _storageKeyForUsername(username);
     await prefs.setString(
-      _storageKey,
+      storageKey,
       jsonEncode(_dailyChallengesToMap(dailyChallenges)),
     );
+  }
+
+  String _storageKeyForUsername(String username) {
+    final String normalized = username.trim().toLowerCase();
+    return '$_storageKeyPrefix.$normalized';
   }
 
   Map<String, dynamic> _dailyChallengesToMap(DailyChallenges dailyChallenges) {
