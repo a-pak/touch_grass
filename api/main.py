@@ -73,6 +73,13 @@ class StreakResetResponse(BaseModel):
     last_recognition_date: str | None
 
 
+class UserStatsResponse(BaseModel):
+    username: str
+    daily_streak: int
+    total_recognitions: int
+    leaderboard_rank: int
+
+
 def normalize_username(username: str) -> str:
     return username.strip().lower()
 
@@ -267,11 +274,43 @@ def leaderboard(
                 "last_recognition_date": 1,
             },
         )
-        .sort(sort_by, DESCENDING)
+        .sort([(sort_by, DESCENDING), ("username", ASCENDING)]) # TODO: onko ok?
         .limit(limit)
     )
 
     return {"items": list(cursor)}
+
+
+@app.get("/me/stats", response_model=UserStatsResponse)
+def my_stats(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    username = get_current_username(credentials)
+    user = users_collection.find_one({"username": username})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    total_recognitions = int(user.get("total_recognitions", 0))
+
+    users_above_count = users_collection.count_documents(
+        {
+            "$or": [
+                {"total_recognitions": {"$gt": total_recognitions}},
+                {
+                    "$and": [
+                        {"total_recognitions": total_recognitions},
+                        {"username": {"$lt": username}},
+                    ]
+                },
+            ]
+        }
+    )
+
+    return UserStatsResponse(
+        username=username,
+        daily_streak=int(user.get("daily_streak", 0)),
+        total_recognitions=total_recognitions,
+        leaderboard_rank=users_above_count + 1,
+    )
 
 @app.get("/plants")
 async def plants(page: int = Query(default=1, ge=1)):
