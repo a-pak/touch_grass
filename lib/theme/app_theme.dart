@@ -14,5 +14,8 @@ class AppTheme {
     cardTheme: const CardThemeData(
       color: Color.fromARGB(255, 41, 58, 51),
     ),
+    //listTileTheme: const ListTileThemeData(
+    //  tileColor: Color.fromARGB(255, 12, 67, 218),
+    //),
   );
 }

@@ -49,17 +49,17 @@ class _HomeScreenState extends State<HomeScreen> {
             onDestinationSelected: (index) {
               homeTabIndexNotifier.value = index;
             },
-            destinations: const [
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.task_alt),
-                label: 'Challenge',
+                icon: Image.asset('assets/leaf.png', width: 24, height: 24),
+                label: 'Challenges',
               ),
               NavigationDestination(
-                icon: Icon(Icons.camera_alt),
+                icon: Image.asset('assets/camera.png', width: 24, height: 24),
                 label: 'Camera',
               ),
               NavigationDestination(
-                icon: Icon(Icons.leaderboard),
+                icon: Image.asset('assets/leaderboard.png', width: 24, height: 24),
                 label: 'Leaderboard',
               ),
             ],

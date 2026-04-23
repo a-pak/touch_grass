@@ -1,6 +1,3 @@
-// TODO: ListView:n tilalle saattaa löytyä jokin muu kontti jolla skrollaus on sujuvampaa ks. https://stackoverflow.com/questions/53405399/simple-flutter-list-view-choppy-scrolling
-// TODO: jos jaksaa niin kun sama kasvi löytyy uudestaan joku ilmoitus (imo ei kyl viiti)
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -29,6 +26,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   Future<DailyChallenges>? _dailyChallengesFuture;
   Future<UserStats>? _userStatsFuture;
   Timer? _countdownTimer;
+  bool _isLoadingChallengesFromApi = false;
 
   void _refreshUserStats() {
     setState(() {
@@ -109,9 +107,26 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   }
 
   Future<DailyChallenges> _loadDailyChallenges() async {
-    final DailyChallenges? stored = await widget.service
-        .getStoredDailyChallenges();
-    return stored ?? widget.service.ensureDailyChallengesOnStartup();
+    final String? username = await widget.loginService.getSavedUsername();
+    if (username == null || username.trim().isEmpty) {
+      throw StateError('User is not logged in');
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingChallengesFromApi = true;
+      });
+    }
+
+    try {
+      return await widget.service.loadChallenges(username: username);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingChallengesFromApi = false;
+        });
+      }
+    }
   }
 
   String _formatDuration(Duration duration) {
@@ -234,6 +249,19 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                   future: _dailyChallengesFuture ??= _loadDailyChallenges(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
+                      if (_isLoadingChallengesFromApi) {
+                        return const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 12),
+                              Text('Loading challenges'),
+                            ],
+                          ),
+                        );
+                      }
+
                       return const Center(child: CircularProgressIndicator());
                     }
 

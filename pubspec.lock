@@ -150,6 +150,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+  flutter_modern_animated_loader:
+    dependency: "direct main"
+    description:
+      name: flutter_modern_animated_loader
+      sha256: "4ea0aac04a8b32443d89bb5753b4725967814d546942d186190fafc8ff5288a7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:

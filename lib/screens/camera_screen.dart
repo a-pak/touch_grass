@@ -1,3 +1,5 @@
+// TODO: file could probably be cleaned up/modularized
+
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -168,8 +170,23 @@ class _CameraScreenState extends State<CameraScreen> {
           return;
         }
 
+        final String? username = await widget.loginService.getSavedUsername();
+        if (username == null || username.trim().isEmpty) {
+          if (!mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session expired. Please log in again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
         final completionResult = await widget.service
             .completeChallengeForScientificName(
+              username: username,
               identifiedScientificNameWithoutAuthor:
                   scientificNameWithoutAuthor,
             );
