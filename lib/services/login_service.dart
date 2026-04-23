@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:touch_grass/config/app_config.dart';
 
 class LeaderboardItem {
   LeaderboardItem({
@@ -81,7 +82,7 @@ class LoginService {
   LoginService()
     : _dio = Dio(
         BaseOptions(
-          baseUrl: 'http://10.0.2.2:8000/',
+          baseUrl: AppConfig.apiBaseUrl, // See lib/config/app_config.dart if needed
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
         ),

@@ -7,6 +7,7 @@ import 'package:touch_grass/services/camera_service.dart';
 import 'package:touch_grass/services/challenge_service.dart';
 import 'package:touch_grass/services/login_service.dart';
 import 'package:touch_grass/services/plantnet_service.dart';
+import 'package:touch_grass/widgets/gradient_outline_text.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({
@@ -319,65 +320,79 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Camera',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            Expanded(child: _buildCameraArea()),
-            const SizedBox(height: 12),
-
-            if (_errorMessage != null) ...[
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            if (_capturedImageBytes == null)
-              SizedBox(
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _canCapture ? _capturePhoto : null,
-                  icon: _isTakingPicture
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.camera_alt),
-                  label: Text(_isTakingPicture ? 'Capturing...' : 'Take Photo'),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/background.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const GradientOutlineText(
+                  text: 'Camera',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
-              ),
+                const SizedBox(height: 12),
 
-            if (_capturedImageBytes != null) ...[
-              ElevatedButton.icon(
-                onPressed: _isAnalyzing ? null : _sendPhoto,
-                icon: _isAnalyzing
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.cloud_upload),
-                label: Text(_isAnalyzing ? 'Analyzing...' : 'Send to Backend'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton(
-                onPressed: _isAnalyzing ? null : _retakePhoto,
-                child: const Text('Take Another Photo'),
-              ),
-            ],
-          ],
+                Expanded(child: _buildCameraArea()),
+                const SizedBox(height: 12),
+
+                if (_errorMessage != null) ...[
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                if (_capturedImageBytes == null)
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _canCapture ? _capturePhoto : null,
+                      icon: _isTakingPicture
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.camera_alt),
+                      label: Text(
+                        _isTakingPicture ? 'Capturing...' : 'Take Photo',
+                      ),
+                    ),
+                  ),
+
+                if (_capturedImageBytes != null) ...[
+                  ElevatedButton.icon(
+                    onPressed: _isAnalyzing ? null : _sendPhoto,
+                    icon: _isAnalyzing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_upload),
+                    label: Text(
+                      _isAnalyzing ? 'Analyzing...' : 'Send to Backend',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton(
+                    onPressed: _isAnalyzing ? null : _retakePhoto,
+                    child: const Text('Take Another Photo'),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

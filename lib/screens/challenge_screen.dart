@@ -6,6 +6,8 @@ import 'package:touch_grass/models/challenge.dart';
 import 'package:touch_grass/services/challenge_service.dart';
 import 'package:touch_grass/services/login_service.dart';
 import 'package:touch_grass/widgets/challenge_card.dart';
+import 'package:touch_grass/widgets/stat_badge.dart';
+import 'package:touch_grass/widgets/gradient_outline_text.dart';
 
 class ChallengeScreen extends StatefulWidget {
   final DailyChallengeService service;
@@ -164,177 +166,187 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: _showHelpDialog,
-                  icon: const Icon(Icons.help_outline, size: 28),
-                  tooltip: 'Help',
-                ),
-                const Spacer(),
-                FutureBuilder<UserStats>(
-                  future: _userStatsFuture ??= _loadUserStats(),
-                  builder: (context, snapshot) {
-                    final UserStats? stats = snapshot.data;
-
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _StatBadge(
-                          asset: 'assets/fire.png',
-                          label: '${stats?.dailyStreak ?? 0}',
-                          color: const Color(0xFFFF521A),
-                        ),
-                        const SizedBox(width: 16),
-                        _StatBadge(
-                          asset: 'assets/rank.png',
-                          label: '# ${stats?.leaderboardRank ?? '-'}',
-                          color: const Color(0xFF85C6FF),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/background.png'),
+            fit: BoxFit.cover,
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Daily\nChallenges',
-                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                  ),
+        ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      'Daily challenges\nreset in',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    IconButton(
+                      onPressed: _showHelpDialog,
+                      icon: const Icon(Icons.help_outline),
+                      tooltip: 'Help',
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _formatDuration(_timeUntilReset),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    const Spacer(),
+                    FutureBuilder<UserStats>(
+                      future: _userStatsFuture ??= _loadUserStats(),
+                      builder: (context, snapshot) {
+                        final UserStats? stats = snapshot.data;
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            StatBadge(
+                              asset: 'assets/fire.png',
+                              label: '${stats?.dailyStreak ?? 0}',
+                              color: const Color(0xFFFF521A),
+                            ),
+                            const SizedBox(width: 16),
+                            StatBadge(
+                              asset: 'assets/rank.png',
+                              label: '# ${stats?.leaderboardRank ?? '-'}',
+                              color: const Color(0xFF85C6FF),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 450),
-                child: FutureBuilder<DailyChallenges>(
-                  future: _dailyChallengesFuture ??= _loadDailyChallenges(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      if (_isLoadingChallengesFromApi) {
-                        return const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 12),
-                              Text('Loading challenges'),
-                            ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GradientOutlineText(
+                            text: 'Daily',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        );
-                      }
-
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (snapshot.hasError) {
-                      return const Center(
-                        child: Text('Failed to load daily challenges.'),
-                      );
-                    }
-
-                    final List<Challenge> challenges =
-                        snapshot.data?.challenges ?? <Challenge>[];
-
-                    if (challenges.isEmpty) {
-                      return const Center(
-                        child: Text('No daily challenges available.'),
-                      );
-                    }
-
-                    return ListView(
-                      padding: const EdgeInsets.fromLTRB(48, 0, 48, 24),
-                      children: [
-                        for (int i = 0; i < challenges.length; i++) ...[
-                          ChallengeCard(
-                            title: challenges[i].targetCommonName,
-                            imageUrl: challenges[i].targetImageUrl,
-                            isCompleted: challenges[i].targetIsCompleted,
-                            onOpenCamera: () {
-                              homeTabIndexNotifier.value = 1;
-                            },
+                          GradientOutlineText(
+                            text: 'Challenges',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          if (i < challenges.length - 1)
-                            const SizedBox(height: 16),
                         ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const GradientOutlineText(
+                          text: 'Daily challenges',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          strokeWidth: 4,
+                        ),
+                        const GradientOutlineText(
+                          text: 'reset in',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          strokeWidth: 4,
+                        ),
+                        const SizedBox(height: 6),
+                        GradientOutlineText(
+                          text: _formatDuration(_timeUntilReset),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          strokeWidth: 4,
+                        ),
                       ],
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 450),
+                    child: FutureBuilder<DailyChallenges>(
+                      future: _dailyChallengesFuture ??= _loadDailyChallenges(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          if (_isLoadingChallengesFromApi) {
+                            return const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 12),
+                                  Text('Loading challenges'),
+                                ],
+                              ),
+                            );
+                          }
 
-class _StatBadge extends StatelessWidget {
-  const _StatBadge({
-    required this.asset,
-    required this.label,
-    required this.color,
-  });
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
 
-  final String asset;
-  final String label;
-  final Color color;
+                        if (snapshot.hasError) {
+                          return const Center(
+                            child: Text('Failed to load daily challenges.'),
+                          );
+                        }
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Image.asset(asset, width: 28, height: 28),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: color,
+                        final List<Challenge> challenges =
+                            snapshot.data?.challenges ?? <Challenge>[];
+
+                        if (challenges.isEmpty) {
+                          return const Center(
+                            child: Text('No daily challenges available.'),
+                          );
+                        }
+
+                        return ListView(
+                          padding: const EdgeInsets.fromLTRB(48, 0, 48, 24),
+                          children: [
+                            for (int i = 0; i < challenges.length; i++) ...[
+                              ChallengeCard(
+                                title: challenges[i].targetCommonName,
+                                imageUrl: challenges[i].targetImageUrl,
+                                isCompleted: challenges[i].targetIsCompleted,
+                                onOpenCamera: () {
+                                  homeTabIndexNotifier.value = 1;
+                                },
+                              ),
+                              if (i < challenges.length - 1)
+                                const SizedBox(height: 16),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
