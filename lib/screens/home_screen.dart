@@ -40,10 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
       valueListenable: homeTabIndexNotifier,
       builder: (context, selectedIndex, _) {
         return Scaffold(
-          // appBar: AppBar(
-          //   title: Text(widget.title),
-          // ),
           body: IndexedStack(index: selectedIndex, children: _tabs),
+          extendBody: true,
           bottomNavigationBar: NavigationBar(
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) {

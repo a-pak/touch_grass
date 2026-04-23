@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:touch_grass/config/app_config.dart';
 
 // HUOM: Jos testaat fyysisellä puhelimella, vaihda 127.0.0.1 tilalle
 // tietokoneesi lähiverkon IP-osoite (esim. 192.168.1.X) ja käynnistä
@@ -6,7 +7,7 @@ import 'package:dio/dio.dart';
 class TrefleService {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://10.0.2.2:8000/',
+      baseUrl: AppConfig.apiBaseUrl, // See lib/config/app_config.dart if needed
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
     ),
