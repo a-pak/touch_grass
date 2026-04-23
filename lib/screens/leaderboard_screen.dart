@@ -78,7 +78,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return Scaffold(
+      body: Stack(
+
+        children: [
+          Positioned.fill(child: Image.asset('assets/background.png', fit: BoxFit.cover,)),
+      SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
@@ -182,7 +187,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             const SizedBox(height: 8),
           ],
         ),
-      ),
+      ),),],
+    ),
     );
   }
 }

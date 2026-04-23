@@ -158,90 +158,100 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.grass, size: 80, color: Colors.green),
-              const SizedBox(height: 16),
-              const Text(
-                'Touch Grass',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-              const SizedBox(height: 48),
-              Text(
-                _isRegisterMode ? 'Create Account' : 'Login',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  hintText: 'Enter your name',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-                onSubmitted: (_) =>
-                    _isRegisterMode ? _onRegister() : _onLogin(),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Enter your password',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                onSubmitted: (_) =>
-                    _isRegisterMode ? _onRegister() : _onLogin(),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isSubmitting
-                    ? null
-                    : (_isRegisterMode ? _onRegister : _onLogin),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(_isRegisterMode ? 'Register' : 'Login'),
-              ),
-              const SizedBox(height: 8),
-              if (!_isRegisterMode)
-                TextButton(
-                  onPressed: _isSubmitting ? null : _openRegisterView,
-                  child: const Text('Register as a new user'),
-                ),
-              if (_isRegisterMode)
-                TextButton(
-                  onPressed: _isSubmitting ? null : _backToLoginView,
-                  child: const Text('Back'),
-                ),
-            ],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset('assets/background.png', fit: BoxFit.cover),
           ),
-        ),
+          SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Image.asset('assets/logo.png'),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Container(
+                    padding: EdgeInsets.all(20.0),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(20.0)
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _isRegisterMode ? 'Create Account' : 'Login',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _usernameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Username',
+                            hintText: 'Enter your name',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person),
+                          ),
+                          onSubmitted: (_) =>
+                              _isRegisterMode ? _onRegister() : _onLogin(),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            hintText: 'Enter your password',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.lock),
+                          ),
+                          onSubmitted: (_) =>
+                              _isRegisterMode ? _onRegister() : _onLogin(),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _isSubmitting
+                              ? null
+                              : (_isRegisterMode ? _onRegister : _onLogin),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(_isRegisterMode ? 'Register' : 'Login'),
+                        ),
+                        const SizedBox(height: 8),
+                        if (!_isRegisterMode)
+                          TextButton(
+                            onPressed: _isSubmitting ? null : _openRegisterView,
+                            child: const Text('Register as a new user'),
+                          ),
+                        if (_isRegisterMode)
+                          TextButton(
+                            onPressed: _isSubmitting ? null : _backToLoginView,
+                            child: const Text('Back'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
