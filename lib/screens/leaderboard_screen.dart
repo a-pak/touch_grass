@@ -150,22 +150,82 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                   _currentUsername != null &&
                                   row.item.username == _currentUsername;
 
-                              return Card(
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    child: Text('${row.rank}'),
-                                  ),
-                                  title: Text(
-                                    row.item.username,
+                              final Widget rankingWidget = switch (row.rank) {
+                                1 => const Text(
+                                  '🥇',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                2 => const Text(
+                                  '🥈',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                3 => const Text(
+                                  '🥉',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                                _ => SizedBox(
+                                  width: 32,
+                                  child: Text(
+                                    '${row.rank}',
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: isCurrentUser
-                                          ? Colors.amber.shade700
-                                          : null,
+                                      fontSize: 14,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
-                                  subtitle: Text(
-                                    'Total plants found: ${row.item.totalRecognitions}',
+                                ),
+                              };
+
+                              final Color cardColor = switch (row.rank) {
+                                1 => Colors.amber.shade50,
+                                2 => Colors.grey.shade100,
+                                3 => Colors.deepOrange.shade50,
+                                _ => Color.fromARGB(200, 0, 0, 0),
+                              };
+
+                              final Color? textColor = switch (row.rank) {
+                                1 => Colors.amber.shade800,
+                                2 => Colors.grey.shade800,
+                                3 => Colors.deepOrange.shade800,
+                                _ => null,
+                              };
+
+                              final BoxDecoration? currentUserDecoration =
+                                  isCurrentUser
+                                  ? BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color.fromARGB(255, 0, 255, 98),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    )
+                                  : null;
+
+                              return Container(
+                                decoration: currentUserDecoration,
+                                child: Card(
+                                  color: cardColor,
+                                  child: ListTile(
+                                    leading: rankingWidget,
+                                    title: Text(
+                                      row.item.username,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                    trailing: Text(
+                                      '${row.item.totalRecognitions} 🌿',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: textColor,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               );
