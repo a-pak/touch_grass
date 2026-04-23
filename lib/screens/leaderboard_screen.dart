@@ -179,8 +179,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 label: const Text('Logout'),
               ),
             ),
-            const SizedBox(height: 16),
-            const CircularProgressIndicator(),
             const SizedBox(height: 8),
           ],
         ),
