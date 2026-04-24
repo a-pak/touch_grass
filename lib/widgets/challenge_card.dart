@@ -31,6 +31,7 @@ class ChallengeCard extends StatelessWidget {
         final imageAspectRatio = 9 / 8;
 
         return Card(
+          elevation: 10,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
