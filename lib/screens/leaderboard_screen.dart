@@ -66,6 +66,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     });
 
     await widget.loginService.logout();
+    homeTabIndexNotifier.value = 0;
 
     if (!mounted) {
       return;

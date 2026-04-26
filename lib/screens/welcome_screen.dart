@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:touch_grass/controllers/home_tab_controller.dart';
 import 'package:touch_grass/screens/home_screen.dart';
 import 'package:touch_grass/services/login_service.dart';
 
@@ -38,6 +39,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       if (!mounted) {
         return;
       }
+
+      homeTabIndexNotifier.value = 0;
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -188,14 +191,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         ),
                         child: Column(
                           children: [
-                            Text(
-                              _isRegisterMode ? 'Create Account' : 'Login',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
                             const SizedBox(height: 16),
                             TextField(
                               controller: _usernameController,
