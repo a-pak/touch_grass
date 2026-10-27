@@ -4,6 +4,7 @@ A mobile game where you identify real plants through daily challenges! Each day 
 <p align="center">
 <img width="481" height="966" alt="image" src="https://github.com/user-attachments/assets/631ddd72-a39c-4477-8d96-de70b73632c9" />
 </p>
+
 ---
 # How the game works
 1. Register or log in.
