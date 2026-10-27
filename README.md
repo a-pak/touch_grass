@@ -13,7 +13,7 @@ A mobile game where you identify real plants through daily challenges! Each day 
 5. Earn progress. Each newly completed challenge adds one recognition to your total.
 6. Climb the leaderboard. Players are ranked by total recognitions.
 ---
-## Credits
+# Credits
 
 Made by Antti Kuivalainen, Valtteri Timonen, Pauli Rantala, Tomi Vesakoivu, Jesse Haimi and Niko Kumpulainen.
 
